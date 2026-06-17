@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALocks Admin</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e1e4ed;
+      --muted: #8b8fa3;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    .header { padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .header .status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+    .header .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.ok { background: var(--green); }
+    .dot.err { background: var(--red); }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+    /* Setup form */
+    #setup { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+    #setup h2 { font-size: 1rem; margin-bottom: 1rem; }
+    #setup label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; margin-top: 0.75rem; }
+    #setup input { width: 100%; padding: 0.6rem 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.9rem; }
+    #setup input:focus { outline: none; border-color: var(--accent); }
+    #setup .actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
+
+    button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-small { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
+
+    /* Scheduler section */
+    .section { margin-bottom: 2rem; }
+    .section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
+
+    .schedule-grid { display: grid; gap: 0.75rem; }
+    .schedule-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+    .schedule-card .name { font-weight: 500; }
+    .schedule-card .next { font-size: 0.85rem; color: var(--muted); }
+    .schedule-card .trigger-type { font-size: 0.75rem; color: var(--muted); background: var(--bg); padding: 0.2rem 0.5rem; border-radius: 4px; margin-top: 0.25rem; }
+
+    /* Action groups */
+    .action-group { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+    .action-group h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; }
+    .action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; }
+
+    .action-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1rem; border-radius: 8px; text-align: left; display: flex; flex-direction: column; gap: 0.25rem; }
+    .action-btn:hover { border-color: var(--accent); background: rgba(99, 102, 241, 0.05); }
+    .action-btn:disabled { opacity: 0.5; cursor: wait; }
+    .action-btn .label { font-weight: 500; font-size: 0.85rem; }
+    .action-btn .desc { font-size: 0.75rem; color: var(--muted); }
+    .action-btn.running { border-color: var(--yellow); }
+    .action-btn.success { border-color: var(--green); }
+    .action-btn.error { border-color: var(--red); }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-card .value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .stat-card .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+    /* Log */
+    #log { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; max-height: 300px; overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.6; }
+    .log-entry { border-bottom: 1px solid var(--border); padding: 0.25rem 0; }
+    .log-entry:last-child { border-bottom: none; }
+    .log-time { color: var(--muted); }
+    .log-ok { color: var(--green); }
+    .log-err { color: var(--red); }
+    .log-info { color: var(--yellow); }
+
+    #app { display: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>ALocks Admin</h1>
+    <div class="status">
+      <span id="conn-label">Not connected</span>
+      <span class="dot" id="conn-dot"></span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Setup -->
+    <div id="setup">
+      <h2>Connect to Backend</h2>
+      <label for="api-url">Backend URL</label>
+      <input id="api-url" type="url" placeholder="https://your-app.up.railway.app" />
+      <label for="api-key">Admin API Key</label>
+      <input id="api-key" type="password" placeholder="your-admin-api-key" />
+      <div class="actions">
+        <button class="btn-primary" onclick="saveAndConnect()">Connect</button>
+      </div>
+    </div>
+
+    <!-- Main app -->
+    <div id="app">
+      <!-- Stats -->
+      <div class="section">
+        <h2>Database Stats</h2>
+        <div class="stats-grid" id="stats-grid"></div>
+      </div>
+
+      <!-- Scheduler -->
+      <div class="section">
+        <h2>Scheduled Jobs</h2>
+        <div class="schedule-grid" id="schedule-grid">
+          <div style="color: var(--muted); font-size: 0.85rem;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="section">
+        <h2>Actions</h2>
+
+        <div class="action-group">
+          <h3>Scraping</h3>
+          <div class="action-grid">
+            <button class="action-btn" data-endpoint="/admin/scrape?mode=full" data-method="POST">
+              <span class="label">Full Scrape</span>
+              <span class="desc">All fighters, events, fights</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape?mode=update" data-method="POST">
+              <span class="label">Update Scrape</span>
+              <span class="desc">New events only</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape-recent" data-method="POST">
+              <span class="label">Recent Update</span>
+              <span class="desc">Post-event results</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape-upcoming" data-method="POST">
+              <span class="label">Scrape Upcoming</span>
+              <span class="desc">Upcoming fights</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape-live-odds" data-method="POST">
+              <span class="label">Live Odds</span>
+              <span class="desc">Current bookmaker odds</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape-historical-odds" data-method="POST">
+              <span class="label">Historical Odds</span>
+              <span class="desc">Backfill odds since 2022</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape-bovada" data-method="POST">
+              <span class="label">Bovada Odds</span>
+              <span class="desc">Method-of-victory odds</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape-profiles" data-method="POST">
+              <span class="label">Fighter Profiles</span>
+              <span class="desc">Countries + images</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <h3>Models & Predictions</h3>
+          <div class="action-grid">
+            <button class="action-btn" data-endpoint="/admin/train-model" data-method="POST">
+              <span class="label">Train Winner Model</span>
+              <span class="desc">Full GBT+RNN+GNN pipeline</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/train-method-model" data-method="POST">
+              <span class="label">Train Method Model</span>
+              <span class="desc">KO/Sub/Dec classifier</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/generate-predictions" data-method="POST">
+              <span class="label">Generate Predictions</span>
+              <span class="desc">Winner predictions</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/generate-method-predictions" data-method="POST">
+              <span class="label">Method Predictions</span>
+              <span class="desc">KO/Sub/Dec predictions</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/generate-rankings" data-method="POST">
+              <span class="label">Generate Rankings</span>
+              <span class="desc">Glicko fighter rankings</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <h3>Previews</h3>
+          <div class="action-grid">
+            <button class="action-btn" data-endpoint="/admin/generate-all-previews" data-method="POST">
+              <span class="label">Generate All Previews</span>
+              <span class="desc">AI previews for upcoming</span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/generate-all-previews?force=true" data-method="POST">
+              <span class="label">Regenerate Previews</span>
+              <span class="desc">Force regenerate all</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <h3>Pipelines</h3>
+          <div class="action-grid">
+            <button class="action-btn" data-endpoint="/admin/run-full-pipeline" data-method="POST" style="grid-column: span 2;">
+              <span class="label">Run Full Pipeline</span>
+              <span class="desc">Scrape + predictions + rankings + previews (same as daily scheduled job)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="section">
+        <h2>Activity Log</h2>
+        <div id="log"></div>
+      </div>
+
+      <div style="margin-top: 1rem;">
+        <button class="btn-danger btn-small" onclick="disconnect()">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    let BASE_URL = '';
+    let API_KEY = '';
+
+    function log(msg, type = 'info') {
+      const el = $('#log');
+      const time = new Date().toLocaleTimeString();
+      const cls = type === 'ok' ? 'log-ok' : type === 'err' ? 'log-err' : 'log-info';
+      el.innerHTML = `<div class="log-entry"><span class="log-time">${time}</span> <span class="${cls}">${msg}</span></div>` + el.innerHTML;
+    }
+
+    async function api(path, method = 'GET') {
+      const res = await fetch(BASE_URL + path, {
+        method,
+        headers: { 'X-Admin-Key': API_KEY },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`${res.status}: ${text}`);
+      }
+      return res.json();
+    }
+
+    async function saveAndConnect() {
+      BASE_URL = $('#api-url').value.replace(/\/+$/, '');
+      API_KEY = $('#api-key').value;
+      if (!BASE_URL || !API_KEY) return;
+
+      try {
+        await api('/admin/stats');
+        localStorage.setItem('alocks_url', BASE_URL);
+        localStorage.setItem('alocks_key', API_KEY);
+        showApp();
+        log('Connected to backend', 'ok');
+      } catch (e) {
+        log('Connection failed: ' + e.message, 'err');
+        alert('Connection failed: ' + e.message);
+      }
+    }
+
+    function disconnect() {
+      localStorage.removeItem('alocks_url');
+      localStorage.removeItem('alocks_key');
+      BASE_URL = '';
+      API_KEY = '';
+      $('#app').style.display = 'none';
+      $('#setup').style.display = 'block';
+      $('#conn-label').textContent = 'Not connected';
+      $('#conn-dot').className = 'dot';
+    }
+
+    async function showApp() {
+      $('#setup').style.display = 'none';
+      $('#app').style.display = 'block';
+      $('#conn-label').textContent = 'Connected';
+      $('#conn-dot').className = 'dot ok';
+
+      loadStats();
+      loadScheduler();
+      setupActionButtons();
+    }
+
+    async function loadStats() {
+      try {
+        const data = await api('/admin/stats');
+        const grid = $('#stats-grid');
+        grid.innerHTML = '';
+        for (const [category, items] of Object.entries(data)) {
+          for (const [key, val] of Object.entries(items)) {
+            grid.innerHTML += `<div class="stat-card"><div class="value">${val.toLocaleString()}</div><div class="label">${key}</div></div>`;
+          }
+        }
+      } catch (e) {
+        log('Failed to load stats: ' + e.message, 'err');
+      }
+    }
+
+    async function loadScheduler() {
+      try {
+        const data = await api('/admin/scheduler');
+        const grid = $('#schedule-grid');
+        grid.innerHTML = '';
+        if (!data.jobs.length) {
+          grid.innerHTML = '<div style="color: var(--muted); font-size: 0.85rem;">No scheduled jobs found</div>';
+          return;
+        }
+        for (const job of data.jobs) {
+          const next = job.next_run ? new Date(job.next_run) : null;
+          const nextStr = next ? next.toLocaleString() : 'Not scheduled';
+          const relative = next ? timeUntil(next) : '';
+          grid.innerHTML += `
+            <div class="schedule-card">
+              <div>
+                <div class="name">${job.name}</div>
+                <div class="trigger-type">${job.trigger}</div>
+              </div>
+              <div style="text-align: right;">
+                <div class="next">${nextStr}</div>
+                <div class="next" style="color: var(--accent);">${relative}</div>
+              </div>
+            </div>`;
+        }
+      } catch (e) {
+        log('Failed to load scheduler: ' + e.message, 'err');
+      }
+    }
+
+    function timeUntil(date) {
+      const diff = date - new Date();
+      if (diff < 0) return 'overdue';
+      const hours = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      if (hours > 24) return `in ${Math.floor(hours / 24)}d ${hours % 24}h`;
+      if (hours > 0) return `in ${hours}h ${mins}m`;
+      return `in ${mins}m`;
+    }
+
+    function setupActionButtons() {
+      document.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const endpoint = btn.dataset.endpoint;
+          const method = btn.dataset.method || 'POST';
+          const label = btn.querySelector('.label').textContent;
+
+          btn.disabled = true;
+          btn.classList.add('running');
+          btn.classList.remove('success', 'error');
+          log(`Triggering: ${label}...`, 'info');
+
+          try {
+            const data = await api(endpoint, method);
+            btn.classList.remove('running');
+            btn.classList.add('success');
+            log(`${label}: ${data.message}`, 'ok');
+            setTimeout(() => loadStats(), 2000);
+          } catch (e) {
+            btn.classList.remove('running');
+            btn.classList.add('error');
+            log(`${label} failed: ${e.message}`, 'err');
+          } finally {
+            btn.disabled = false;
+            setTimeout(() => btn.classList.remove('success', 'error'), 5000);
+          }
+        });
+      });
+    }
+
+    // Auto-connect on load
+    (function init() {
+      const savedUrl = localStorage.getItem('alocks_url');
+      const savedKey = localStorage.getItem('alocks_key');
+      if (savedUrl && savedKey) {
+        $('#api-url').value = savedUrl;
+        $('#api-key').value = savedKey;
+        BASE_URL = savedUrl;
+        API_KEY = savedKey;
+        showApp();
+      }
+    })();
+
+    // Refresh scheduler every 60s
+    setInterval(() => {
+      if (BASE_URL) loadScheduler();
+    }, 60000);
+  </script>
+</body>
+</html>
