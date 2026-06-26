@@ -65,15 +65,12 @@
     .action-btn:disabled { opacity: 0.5; cursor: wait; }
     .action-btn .label { font-weight: 500; font-size: 0.85rem; }
     .action-btn .desc { font-size: 0.75rem; color: var(--muted); }
+    .action-btn .last-run { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+    .action-btn .last-run.last-run-ok { color: var(--green); }
+    .action-btn .last-run.last-run-err { color: var(--red); }
     .action-btn.running { border-color: var(--yellow); }
     .action-btn.success { border-color: var(--green); }
     .action-btn.error { border-color: var(--red); }
-
-    /* Stats */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
-    .stat-card .value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-    .stat-card .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
 
     /* Log */
     #log { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; max-height: 300px; overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.6; }
@@ -83,6 +80,20 @@
     .log-ok { color: var(--green); }
     .log-err { color: var(--red); }
     .log-info { color: var(--yellow); }
+
+    /* DB Explorer */
+    .query-area { width: 100%; min-height: 80px; padding: 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; resize: vertical; }
+    .query-area:focus { outline: none; border-color: var(--accent); }
+    .query-bar { display: flex; gap: 0.5rem; margin-top: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .query-presets { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .preset-btn { background: var(--bg); border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+    .preset-btn:hover { border-color: var(--accent); color: var(--text); }
+    .query-result { margin-top: 1rem; overflow-x: auto; }
+    .query-result table { width: 100%; border-collapse: collapse; font-size: 0.8rem; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .query-result th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--border); color: var(--accent); font-weight: 600; white-space: nowrap; }
+    .query-result td { padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border); white-space: nowrap; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+    .query-result tr:hover td { background: rgba(99, 102, 241, 0.05); }
+    .query-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
 
     #app { display: none; }
   </style>
@@ -111,12 +122,6 @@
 
     <!-- Main app -->
     <div id="app">
-      <!-- Stats -->
-      <div class="section">
-        <h2>Database Stats</h2>
-        <div class="stats-grid" id="stats-grid"></div>
-      </div>
-
       <!-- Scheduler -->
       <div class="section">
         <h2>Scheduled Jobs</h2>
@@ -135,34 +140,47 @@
             <button class="action-btn" data-endpoint="/admin/scrape?mode=full" data-method="POST">
               <span class="label">Full Scrape</span>
               <span class="desc">All fighters, events, fights</span>
+              <span class="last-run" data-run-label="Scrape (full)"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/scrape?mode=update" data-method="POST">
               <span class="label">Update Scrape</span>
               <span class="desc">New events only</span>
+              <span class="last-run" data-run-label="Scrape (update)"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/scrape-recent" data-method="POST">
               <span class="label">Recent Update</span>
               <span class="desc">Post-event results</span>
+              <span class="last-run" data-run-label="Recent Update"></span>
+            </button>
+            <button class="action-btn" data-endpoint="/admin/scrape-last-event" data-method="POST">
+              <span class="label">Scrape Last Event</span>
+              <span class="desc">Re-scrape most recent event</span>
+              <span class="last-run" data-run-label="Scrape Last Event"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/scrape-upcoming" data-method="POST">
               <span class="label">Scrape Upcoming</span>
               <span class="desc">Upcoming fights</span>
+              <span class="last-run" data-run-label="Scrape Upcoming"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/scrape-live-odds" data-method="POST">
               <span class="label">Live Odds</span>
               <span class="desc">Current bookmaker odds</span>
+              <span class="last-run" data-run-label="Live Odds"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/scrape-historical-odds" data-method="POST">
               <span class="label">Historical Odds</span>
               <span class="desc">Backfill odds since 2022</span>
+              <span class="last-run" data-run-label="Historical Odds"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/scrape-bovada" data-method="POST">
               <span class="label">Bovada Odds</span>
               <span class="desc">Method-of-victory odds</span>
+              <span class="last-run" data-run-label="Bovada Odds"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/scrape-profiles" data-method="POST">
               <span class="label">Fighter Profiles</span>
               <span class="desc">Countries + images</span>
+              <span class="last-run" data-run-label="Fighter Profiles"></span>
             </button>
           </div>
         </div>
@@ -173,22 +191,27 @@
             <button class="action-btn" data-endpoint="/admin/train-model" data-method="POST">
               <span class="label">Train Winner Model</span>
               <span class="desc">Full GBT+RNN+GNN pipeline</span>
+              <span class="last-run" data-run-label="Train Winner Model"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/train-method-model" data-method="POST">
               <span class="label">Train Method Model</span>
               <span class="desc">KO/Sub/Dec classifier</span>
+              <span class="last-run" data-run-label="Train Method Model"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/generate-predictions" data-method="POST">
               <span class="label">Generate Predictions</span>
               <span class="desc">Winner predictions</span>
+              <span class="last-run" data-run-label="Generate Predictions"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/generate-method-predictions" data-method="POST">
               <span class="label">Method Predictions</span>
               <span class="desc">KO/Sub/Dec predictions</span>
+              <span class="last-run" data-run-label="Method Predictions"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/generate-rankings" data-method="POST">
               <span class="label">Generate Rankings</span>
               <span class="desc">Glicko fighter rankings</span>
+              <span class="last-run" data-run-label="Generate Rankings"></span>
             </button>
           </div>
         </div>
@@ -199,10 +222,12 @@
             <button class="action-btn" data-endpoint="/admin/generate-all-previews" data-method="POST">
               <span class="label">Generate All Previews</span>
               <span class="desc">AI previews for upcoming</span>
+              <span class="last-run" data-run-label="Generate All Previews"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/generate-all-previews?force=true" data-method="POST">
               <span class="label">Regenerate Previews</span>
               <span class="desc">Force regenerate all</span>
+              <span class="last-run" data-run-label="Generate All Previews"></span>
             </button>
           </div>
         </div>
@@ -213,8 +238,30 @@
             <button class="action-btn" data-endpoint="/admin/run-full-pipeline" data-method="POST" style="grid-column: span 2;">
               <span class="label">Run Full Pipeline</span>
               <span class="desc">Scrape + predictions + rankings + previews (same as daily scheduled job)</span>
+              <span class="last-run" data-run-label="Full Pipeline"></span>
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- DB Explorer -->
+      <div class="section">
+        <h2>Database Explorer</h2>
+        <div class="action-group">
+          <textarea class="query-area" id="query-input" placeholder="SELECT * FROM ufc_fights WHERE event_id = (SELECT id FROM ufc_events ORDER BY date DESC LIMIT 1)" spellcheck="false"></textarea>
+          <div class="query-bar">
+            <button class="btn-primary" onclick="runQuery()">Run Query</button>
+            <span id="query-status" style="font-size: 0.8rem; color: var(--muted);"></span>
+          </div>
+          <div class="query-presets">
+            <button class="preset-btn" onclick="setQuery('last-event-fights')">Last Event Fights</button>
+            <button class="preset-btn" onclick="setQuery('recent-predictions')">Recent Predictions</button>
+            <button class="preset-btn" onclick="setQuery('upcoming-fights')">Upcoming Fights</button>
+            <button class="preset-btn" onclick="setQuery('missing-results')">Missing Results</button>
+            <button class="preset-btn" onclick="setQuery('tables')">List Tables</button>
+            <button class="preset-btn" onclick="setQuery('model-runs')">Model Runs</button>
+          </div>
+          <div class="query-result" id="query-result"></div>
         </div>
       </div>
 
@@ -288,23 +335,28 @@
       $('#conn-label').textContent = 'Connected';
       $('#conn-dot').className = 'dot ok';
 
-      loadStats();
       loadScheduler();
+      loadLastRuns();
       setupActionButtons();
     }
 
-    async function loadStats() {
+    async function loadLastRuns() {
       try {
-        const data = await api('/admin/stats');
-        const grid = $('#stats-grid');
-        grid.innerHTML = '';
-        for (const [category, items] of Object.entries(data)) {
-          for (const [key, val] of Object.entries(items)) {
-            grid.innerHTML += `<div class="stat-card"><div class="value">${val.toLocaleString()}</div><div class="label">${key}</div></div>`;
+        const data = await api('/admin/last-runs');
+        document.querySelectorAll('.last-run[data-run-label]').forEach(el => {
+          const label = el.dataset.runLabel;
+          const run = data[label];
+          if (run) {
+            const time = new Date(run.finished + 'Z').toLocaleString();
+            const isErr = run.status === 'error';
+            el.textContent = (isErr ? '\u2717 ' : '\u2713 ') + time;
+            el.className = 'last-run ' + (isErr ? 'last-run-err' : 'last-run-ok');
+          } else {
+            el.textContent = 'Never run';
           }
-        }
+        });
       } catch (e) {
-        log('Failed to load stats: ' + e.message, 'err');
+        log('Failed to load last runs: ' + e.message, 'err');
       }
     }
 
@@ -348,6 +400,33 @@
       return `in ${mins}m`;
     }
 
+    async function pollTask(taskId, label, btn) {
+      const poll = async () => {
+        try {
+          const status = await api(`/admin/task-status/${taskId}`);
+          if (status.status === 'done') {
+            btn.classList.remove('running');
+            btn.classList.add('success');
+            btn.disabled = false;
+            log(`${label}: Completed`, 'ok');
+            loadLastRuns();
+            setTimeout(() => btn.classList.remove('success'), 5000);
+          } else if (status.status === 'error') {
+            btn.classList.remove('running');
+            btn.classList.add('error');
+            btn.disabled = false;
+            log(`${label}: Failed — ${status.error}`, 'err');
+            setTimeout(() => btn.classList.remove('error'), 5000);
+          } else {
+            setTimeout(poll, 3000);
+          }
+        } catch (e) {
+          setTimeout(poll, 5000);
+        }
+      };
+      setTimeout(poll, 2000);
+    }
+
     function setupActionButtons() {
       document.querySelectorAll('.action-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -358,25 +437,131 @@
           btn.disabled = true;
           btn.classList.add('running');
           btn.classList.remove('success', 'error');
-          log(`Triggering: ${label}...`, 'info');
+          log(`${label}: Starting...`, 'info');
 
           try {
             const data = await api(endpoint, method);
-            btn.classList.remove('running');
-            btn.classList.add('success');
-            log(`${label}: ${data.message}`, 'ok');
-            setTimeout(() => loadStats(), 2000);
+            if (data.task_id) {
+              pollTask(data.task_id, label, btn);
+            } else {
+              btn.classList.remove('running');
+              btn.classList.add('success');
+              btn.disabled = false;
+              log(`${label}: ${data.message}`, 'ok');
+              loadLastRuns();
+              setTimeout(() => btn.classList.remove('success'), 5000);
+            }
           } catch (e) {
             btn.classList.remove('running');
             btn.classList.add('error');
-            log(`${label} failed: ${e.message}`, 'err');
-          } finally {
             btn.disabled = false;
-            setTimeout(() => btn.classList.remove('success', 'error'), 5000);
+            log(`${label}: Failed — ${e.message}`, 'err');
+            setTimeout(() => btn.classList.remove('error'), 5000);
           }
         });
       });
     }
+
+    // DB Explorer
+    const PRESETS = {
+      'last-event-fights': `SELECT f.id, r.name AS red, b.name AS blue, f.weight_class,
+  w.name AS winner, f.method, f.round, f.time
+FROM ufc_fights f
+JOIN ufc_fighters r ON f.red_fighter_id = r.id
+JOIN ufc_fighters b ON f.blue_fighter_id = b.id
+LEFT JOIN ufc_fighters w ON f.winner_id = w.id
+WHERE f.event_id = (SELECT id FROM ufc_events ORDER BY date DESC LIMIT 1)
+ORDER BY f.id`,
+      'recent-predictions': `SELECT p.id, p.fight_id, r.name AS red, b.name AS blue,
+  p.predicted_winner, p.confidence, p.model_name, p.created_at
+FROM predictions p
+JOIN ufc_fights f ON p.fight_id = f.id
+JOIN ufc_fighters r ON f.red_fighter_id = r.id
+JOIN ufc_fighters b ON f.blue_fighter_id = b.id
+ORDER BY p.created_at DESC LIMIT 50`,
+      'upcoming-fights': `SELECT e.name AS event, e.date, f.id AS fight_id,
+  r.name AS red, b.name AS blue, f.weight_class
+FROM ufc_fights f
+JOIN ufc_events e ON f.event_id = e.id
+JOIN ufc_fighters r ON f.red_fighter_id = r.id
+JOIN ufc_fighters b ON f.blue_fighter_id = b.id
+WHERE f.winner_id IS NULL AND e.date >= CURRENT_DATE
+ORDER BY e.date, f.id`,
+      'missing-results': `SELECT e.name AS event, e.date, f.id AS fight_id,
+  r.name AS red, b.name AS blue, f.weight_class
+FROM ufc_fights f
+JOIN ufc_events e ON f.event_id = e.id
+JOIN ufc_fighters r ON f.red_fighter_id = r.id
+JOIN ufc_fighters b ON f.blue_fighter_id = b.id
+WHERE f.winner_id IS NULL AND e.date < CURRENT_DATE
+ORDER BY e.date DESC LIMIT 50`,
+      'tables': `SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public' ORDER BY table_name`,
+      'model-runs': `SELECT * FROM model_runs ORDER BY created_at DESC LIMIT 20`,
+    };
+
+    function setQuery(key) {
+      $('#query-input').value = PRESETS[key] || '';
+    }
+
+    async function runQuery() {
+      const sql = $('#query-input').value.trim();
+      if (!sql) return;
+
+      const status = $('#query-status');
+      const resultDiv = $('#query-result');
+      status.textContent = 'Running...';
+      status.style.color = 'var(--yellow)';
+      resultDiv.innerHTML = '';
+
+      try {
+        const res = await fetch(BASE_URL + '/admin/query', {
+          method: 'POST',
+          headers: { 'X-Admin-Key': API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sql }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || res.statusText);
+        }
+        const data = await res.json();
+
+        if (!data.rows.length) {
+          status.textContent = 'No rows returned';
+          status.style.color = 'var(--muted)';
+          return;
+        }
+
+        let html = '<table><thead><tr>';
+        for (const col of data.columns) html += `<th>${col}</th>`;
+        html += '</tr></thead><tbody>';
+        for (const row of data.rows) {
+          html += '<tr>';
+          for (const col of data.columns) {
+            const val = row[col];
+            const display = val === null ? '<span style="color:var(--muted)">NULL</span>' : String(val);
+            html += `<td title="${String(val).replace(/"/g, '&quot;')}">${display}</td>`;
+          }
+          html += '</tr>';
+        }
+        html += '</tbody></table>';
+        html += `<div class="query-meta">${data.count} row${data.count !== 1 ? 's' : ''} returned (max 200)</div>`;
+        resultDiv.innerHTML = html;
+        status.textContent = `${data.count} rows`;
+        status.style.color = 'var(--green)';
+      } catch (e) {
+        status.textContent = e.message;
+        status.style.color = 'var(--red)';
+      }
+    }
+
+    // Ctrl/Cmd+Enter to run query
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && document.activeElement === $('#query-input')) {
+        e.preventDefault();
+        runQuery();
+      }
+    });
 
     // Auto-connect on load
     (function init() {
@@ -391,9 +576,9 @@
       }
     })();
 
-    // Refresh scheduler every 60s
+    // Refresh scheduler + last runs every 60s
     setInterval(() => {
-      if (BASE_URL) loadScheduler();
+      if (BASE_URL) { loadScheduler(); loadLastRuns(); }
     }, 60000);
   </script>
 </body>
