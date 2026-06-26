@@ -190,7 +190,7 @@
           <div class="action-grid">
             <button class="action-btn" data-endpoint="/admin/train-model" data-method="POST">
               <span class="label">Train Winner Model</span>
-              <span class="desc">Full GBT+RNN+GNN pipeline</span>
+              <span class="desc">GBT + Siamese pipeline</span>
               <span class="last-run" data-run-label="Train Winner Model"></span>
             </button>
             <button class="action-btn" data-endpoint="/admin/train-method-model" data-method="POST">
@@ -208,9 +208,14 @@
               <span class="desc">KO/Sub/Dec predictions</span>
               <span class="last-run" data-run-label="Method Predictions"></span>
             </button>
+            <button class="action-btn" data-endpoint="/admin/generate-glicko" data-method="POST">
+              <span class="label">Generate Glicko</span>
+              <span class="desc">Recompute Glicko ratings &amp; snapshots</span>
+              <span class="last-run" data-run-label="Generate Glicko Ratings"></span>
+            </button>
             <button class="action-btn" data-endpoint="/admin/generate-rankings" data-method="POST">
               <span class="label">Generate Rankings</span>
-              <span class="desc">Glicko fighter rankings</span>
+              <span class="desc">Glicko + fighter rankings</span>
               <span class="last-run" data-run-label="Generate Rankings"></span>
             </button>
           </div>
