@@ -432,7 +432,16 @@
       setTimeout(poll, 2000);
     }
 
+    // showApp() runs on page load with saved credentials and again after Connect.
+    // Binding twice would stack a second listener on every button, so one click
+    // would fire two requests — and two concurrent runs of a rebuild action
+    // (Generate Predictions clears its tables first) corrupt the result.
+    let actionButtonsBound = false;
+
     function setupActionButtons() {
+      if (actionButtonsBound) return;
+      actionButtonsBound = true;
+
       document.querySelectorAll('.action-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const endpoint = btn.dataset.endpoint;
