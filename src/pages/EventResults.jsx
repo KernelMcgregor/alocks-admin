@@ -8,8 +8,9 @@ import { cn, formatDate, formatDateTime } from '../lib/utils'
 export const FETCH_STEPS = [
   'Scrape results and fight stats from ufcstats.com',
   'Derived fight stats and career stats',
-  'Rankings, then rank history',
+  'Glicko ratings and rankings, then rank history',
   'Fighter similarity',
+  'Bio and photo from ufc.com for debuting and recent fighters',
   'Winner and method predictions for upcoming fights',
 ]
 

@@ -11,7 +11,7 @@ export const ACTION_GROUPS = [
       },
       {
         label: 'Refresh After Event', endpoint: '/admin/refresh-after-event', runLabel: 'Refresh After Event',
-        what: 'Rebuild derived stats → career stats → rankings → rank history → similarity from what is already in the database. No scraping.',
+        what: 'Rebuild derived stats → career stats → Glicko ratings + rankings → rank history → similarity from what is already in the database. No scraping.',
       },
     ],
   },
@@ -20,7 +20,8 @@ export const ACTION_GROUPS = [
     actions: [
       { label: 'Recent Update', endpoint: '/admin/scrape-recent', runLabel: 'Recent Update', what: 'Scrape results for any card newer than the latest one with results, then refresh upcoming cards. Does not rebuild stats.' },
       { label: 'Scrape Upcoming', endpoint: '/admin/scrape-upcoming', runLabel: 'Scrape Upcoming', what: 'Refresh upcoming events and their bouts from ufcstats.com.' },
-      { label: 'Fighter Profiles', endpoint: '/admin/scrape-profiles', runLabel: 'Fighter Profiles', what: 'Birthplace, nationality, style, gym and images from ufc.com. Fields you locked on the Fighters page are left alone.' },
+      { label: 'Fighter Profiles', endpoint: '/admin/scrape-profiles', runLabel: 'Fighter Profiles', what: 'Bio and photo from ufc.com for anyone who fought in the last 60 days or is booked on an upcoming card and is still missing them, then caches the photos. Runs nightly too. Fields you locked on the Fighters page are left alone.' },
+      { label: 'Fighter Profiles (whole roster)', endpoint: '/admin/scrape-profiles?recent_days=0', runLabel: 'Fighter Profiles', what: 'The same for every fighter in the database still missing a bio or photo, including retired ones. Slow.' },
       { label: 'Live Odds', endpoint: '/admin/scrape-live-odds', runLabel: 'Live Odds', what: 'Current bookmaker odds for upcoming fights.' },
       { label: 'Bovada Odds', endpoint: '/admin/scrape-bovada', runLabel: 'Bovada Odds', what: 'Method-of-victory odds for upcoming fights.' },
       { label: 'Prediction Markets', endpoint: '/admin/scrape-prediction-markets', runLabel: 'Prediction Markets (both)', what: 'Kalshi and Polymarket quotes and price history for open fights.' },
@@ -41,8 +42,8 @@ export const ACTION_GROUPS = [
     actions: [
       { label: 'Derived Fight Stats', endpoint: '/admin/generate-derived-stats', runLabel: 'Derived Fight Stats', what: 'Per-fight rate stats (per-minute, accuracy, defence).' },
       { label: 'Career Stats', endpoint: '/admin/generate-career-stats', runLabel: 'Career Stats', what: 'Career aggregates per fighter, from the derived stats.' },
-      { label: 'Generate Glicko', endpoint: '/admin/generate-glicko', runLabel: 'Generate Glicko Ratings', what: 'Recompute Glicko ratings and snapshots over all of history.' },
-      { label: 'Generate Rankings', endpoint: '/admin/generate-rankings', runLabel: 'Generate Rankings', what: 'Publish Glicko + points rankings.' },
+      { label: 'Glicko Ratings only', endpoint: '/admin/generate-glicko', runLabel: 'Generate Glicko Ratings', what: 'Recompute Glicko ratings and snapshots without publishing rankings.' },
+      { label: 'Glicko Ratings + Rankings', endpoint: '/admin/generate-rankings', runLabel: 'Glicko Ratings + Rankings', what: 'Replay Glicko ratings over all of history, then publish the rankings.' },
       { label: 'Fighter Similarity', endpoint: '/admin/generate-similarity', runLabel: 'Fighter Similarity', what: 'Style-similarity scores between fighters.' },
     ],
   },
