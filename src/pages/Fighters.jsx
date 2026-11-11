@@ -108,7 +108,7 @@ function Editor({ fighterId }) {
                     value={form[key] ?? ''}
                     placeholder={placeholder}
                     onChange={(e) => { setSaved(false); setForm({ ...form, [key]: e.target.value }) }}
-                    className={cn(changed && 'border-blue-400 bg-blue-50/40', fieldErrors[key] && 'border-red-400')}
+                    className={cn(changed && 'border-primary/50 bg-primary/[0.04]', fieldErrors[key] && 'border-red-400')}
                   />
                   {fieldErrors[key] ? <span className="block text-xs text-red-600">{fieldErrors[key]}</span>
                     : hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
@@ -198,7 +198,7 @@ export default function Fighters() {
                     key={f.id}
                     onClick={() => setSelected(f.id)}
                     className={cn('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent cursor-pointer',
-                      selected === f.id && 'bg-blue-50 font-semibold text-blue-700')}
+                      selected === f.id && 'bg-primary/[0.06] font-semibold text-primary')}
                   >
                     <Flag code={f.country_code} />
                     <span className="flex-1 truncate">{f.name}</span>

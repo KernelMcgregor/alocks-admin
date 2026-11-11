@@ -4,6 +4,7 @@ import Sidebar, { NAV } from './components/Sidebar'
 import { Button, Card, CardContent, ErrorNote, Input } from './components/ui'
 import { api, clearConnection, loadConnection, saveConnection, setConnection } from './lib/api'
 import Actions from './pages/Actions'
+import Articles from './pages/Articles'
 import AuditLog from './pages/AuditLog'
 import DatabasePage from './pages/Database'
 import EventResults from './pages/EventResults'
@@ -13,7 +14,7 @@ import Schedule from './pages/Schedule'
 
 const PAGES = {
   overview: Overview, results: EventResults, actions: Actions, schedule: Schedule,
-  audit: AuditLog, fighters: Fighters, database: DatabasePage,
+  audit: AuditLog, fighters: Fighters, articles: Articles, database: DatabasePage,
 }
 
 const DEFAULT_URL = 'https://alphalocksbackend-production.up.railway.app'
@@ -49,11 +50,11 @@ function Connect({ initial, onConnected }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <Card className="w-full max-w-md">
-        <div className="flex items-center gap-3 rounded-t-lg bg-gradient-to-b from-blue-600 to-blue-700 px-6 py-5">
-          <img src={logoSrc} alt="" className="h-10 w-10 rounded-full" />
+        <div className="flex items-center gap-3 rounded-t-lg bg-ink px-6 py-5">
+          <img src={logoSrc} alt="" className="h-11 w-11" />
           <div>
-            <div className="text-xl font-bold text-white tracking-tight">Alpha Locks Admin</div>
-            <div className="text-xs text-blue-200">Connect to the production backend</div>
+            <div className="font-display text-[26px] font-extrabold italic uppercase leading-none tracking-tight"><span className="text-white">Chin</span><span className="text-primary">lytics</span> <span className="text-white">Admin</span></div>
+            <div className="mt-1 text-xs text-slate-400">Connect to the production backend</div>
           </div>
         </div>
         <CardContent className="pt-5">

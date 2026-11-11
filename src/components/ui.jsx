@@ -87,7 +87,7 @@ export function StatusBadge({ status, className }) {
 }
 
 const SOURCES = {
-  manual: { label: 'Dashboard', cls: 'border-blue-200 text-blue-700' },
+  manual: { label: 'Dashboard', cls: 'border-primary/30 text-primary' },
   scheduled: { label: 'Scheduled', cls: 'border-violet-200 text-violet-700' },
   github: { label: 'GitHub Actions', cls: 'border-slate-300 text-slate-700' },
   cli: { label: 'CLI', cls: 'border-slate-300 text-slate-700' },
@@ -102,7 +102,7 @@ export function PageTitle({ icon: Icon, title, subtitle, children }) {
   return (
     <div className="flex flex-wrap items-center gap-3 shrink-0">
       <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
           <Icon className="h-5 w-5 text-white" />
         </span>
         {title}

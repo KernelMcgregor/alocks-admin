@@ -30,6 +30,8 @@ export function clearConnection() {
 let conn = loadConnection()
 export const setConnection = (c) => { conn = c }
 export const currentActor = () => conn.actor
+// The backend's public URL (article pictures are served from its /ufc routes).
+export const apiBase = () => conn.url.replace(/\/+$/, '')
 
 export class ApiError extends Error {
   constructor(status, detail) {
