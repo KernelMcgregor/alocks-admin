@@ -1,10 +1,11 @@
 // Articles: covers, framing, in-article pictures, manual edits and context rewrites.
 //
-// Pick an article on the left. The editor on the right has the cover (upload, swap for
-// a search candidate, reframe by clicking where the subject is), pictures to embed in
-// the text, the markdown itself, and a box for background the agent folds into a
-// rewrite. Rewrites come back as a draft in the editor; nothing is live until Save.
-import { FileText, ImagePlus, Loader2, Sparkles, Trash2, Upload } from 'lucide-react'
+// Pick an article on the left. The editor on the right has the newsroom's reporting
+// (claims to strike, the checker's verdict, the layout), the cover (upload, swap for a
+// search candidate, reframe by clicking where the subject is), pictures to embed in the
+// text, the markdown itself, and a box for background the agent folds into a rewrite.
+// Rewrites come back as a draft in the editor; nothing is live until Save.
+import { ExternalLink, FileText, ImagePlus, Loader2, Newspaper, Sparkles, Trash2, Upload } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -212,6 +213,109 @@ function MediaCard({ article, onInsert, reload, setError }) {
 }
 
 // ---------------------------------------------------------------------------
+// Newsroom: the reporting the article was written from
+// ---------------------------------------------------------------------------
+const LAYOUTS = ['feature', 'rivalry', 'magazine', 'data', 'standard', 'brief']
+const RUN_STATUS = {
+  published: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  needs_review: 'border-amber-200 bg-amber-50 text-amber-800',
+  skipped_edited: 'border-slate-200 bg-slate-50 text-slate-600',
+  no_news: 'border-slate-200 bg-slate-50 text-slate-600',
+}
+const TIER_LABEL = { matchup: 'This fight', recent: 'Since last fight', background: 'Background' }
+
+function Claim({ c, onStrike, busy }) {
+  return (
+    <div className={cn('rounded-md border px-3 py-2 text-sm', c.struck && 'opacity-50')}>
+      <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+        <Badge className="border-slate-200 bg-slate-50 font-medium text-slate-600">{c.kind}</Badge>
+        <span className="font-medium text-slate-700">{c.fighter}</span>
+        {c.used && <Badge className="border-emerald-200 bg-emerald-50 font-medium text-emerald-700">In article</Badge>}
+        <span className="flex-1" />
+        {c.url && (
+          <a href={c.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-slate-800">
+            {[c.outlet, c.show, c.published_at].filter(Boolean).join(' · ')}<ExternalLink className="h-3 w-3" />
+          </a>
+        )}
+        <button disabled={busy} onClick={() => onStrike(c)} className="ml-2 rounded px-1.5 py-0.5 hover:bg-slate-100">
+          {c.struck ? 'Restore' : 'Strike'}
+        </button>
+      </div>
+      <div className={cn(c.struck && 'line-through')}>{c.text}</div>
+      {c.quote && <div className="mt-1 border-l-2 border-slate-300 pl-2 italic text-slate-600">“{c.quote}” {c.speaker && <span className="not-italic">— {c.speaker}</span>}</div>}
+    </div>
+  )
+}
+
+function NewsroomCard({ fightId, setError }) {
+  const [info, setInfo] = useState(null)
+  const [busy, setBusy] = useState(null)
+  const [started, setStarted] = useState(false)
+  const [tier, setTier] = useState('matchup')
+  const load = () => api(`/admin/articles/${fightId}/newsroom`).then(setInfo).catch(setError)
+  useEffect(() => { setInfo(null); setStarted(false); load() }, [fightId])
+  const act = async (key, fn) => {
+    setBusy(key); setError(null)
+    try { await fn(); await load() } catch (e) { setError(e) } finally { setBusy(null) }
+  }
+  if (!info) return null
+  const run = info.run
+  const byTier = (t) => info.claims.filter((c) => c.tier === t)
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Newspaper className="h-4 w-4 text-slate-500" />
+          <CardTitle className="text-base">Reporting</CardTitle>
+          {run && <Badge className={RUN_STATUS[run.status] || RUN_STATUS.no_news}>{run.status.replace('_', ' ')}</Badge>}
+          <span className="text-xs text-slate-500">${info.month_usd.toFixed(2)} this month</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={run?.layout_override || ''} disabled={!!busy}
+            onChange={(e) => act('layout', () => api(`/admin/articles/${fightId}/layout`, { method: 'PUT', body: { layout: e.target.value || null } }))}>
+            <option value="">Layout: {run?.layout || 'automatic'}</option>
+            {LAYOUTS.map((l) => <option key={l} value={l}>{l}</option>)}
+          </Select>
+          <Button variant="outline" size="sm" disabled={!!busy || started}
+            onClick={() => act('run', async () => { await api(`/admin/articles/${fightId}/newsroom-run`, { method: 'POST' }); setStarted(true) })}>
+            {busy === 'run' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+            {started ? 'Running… reload in a minute' : 'Research & rewrite'}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {!info.ready || (!run && !info.claims.length)
+          ? <p className="text-sm text-slate-500">No reporting yet. The newsroom covers the top five fights of cards within ten days.</p>
+          : (
+            <>
+              {run?.thesis && <div className="text-sm"><b>Argues for:</b> {run.thesis}{run.angle && <> · <span className="text-slate-600">{run.angle}</span></>}</div>}
+              {run?.issues?.length > 0 && (
+                <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm">
+                  <div className="mb-1 font-medium text-amber-800">Held back by the fact-checker</div>
+                  <ul className="list-disc space-y-0.5 pl-5 text-amber-900">{run.issues.map((i, n) => <li key={n}>{i}</li>)}</ul>
+                </div>
+              )}
+              <div className="inline-flex rounded-md bg-slate-100 p-0.5 text-sm">
+                {Object.entries(TIER_LABEL).map(([t, label]) => (
+                  <button key={t} onClick={() => setTier(t)} className={cn('rounded px-3 py-0.5', tier === t ? 'bg-white shadow-sm' : 'text-slate-500')}>
+                    {label} <span className="text-slate-400">{byTier(t).length}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                {byTier(tier).map((c) => (
+                  <Claim key={c.id} c={c} busy={!!busy}
+                    onStrike={(x) => act(`strike${x.id}`, () => api(`/admin/claims/${x.id}`, { method: 'PUT', body: { struck: !x.struck } }))} />
+                ))}
+              </div>
+            </>
+          )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Text: editor, preview, rewrite with context
 // ---------------------------------------------------------------------------
 const SNIPPETS = [
@@ -300,6 +404,7 @@ function Editor({ fightId }) {
       </div>
       {error && <ErrorNote error={error} />}
 
+      <NewsroomCard fightId={fightId} setError={setError} />
       <CoverCard article={article} reload={reload} setError={setError} />
       <MediaCard article={article} onInsert={insert} reload={reload} setError={setError} />
 
@@ -387,6 +492,8 @@ export default function Articles() {
                     className={cn('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm',
                       selected === a.fight_id ? 'bg-slate-800 text-white' : 'hover:bg-slate-100')}>
                     <span className="min-w-0 flex-1 truncate">{a.red.split(' ').slice(-1)} vs {a.blue.split(' ').slice(-1)}</span>
+                    {a.newsroom === 'needs_review' && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" title="Held back by the fact-checker" />}
+                    {a.newsroom === 'published' && <Newspaper className="h-3.5 w-3.5 shrink-0 opacity-60" title="Researched" />}
                     {!a.has_cover && <ImagePlus className="h-3.5 w-3.5 shrink-0 opacity-60" title="No cover" />}
                     {a.edited_at && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" title="Edited" />}
                   </button>
